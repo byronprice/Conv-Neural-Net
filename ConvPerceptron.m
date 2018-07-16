@@ -77,7 +77,7 @@ for ii=1:runs
             dCostdBias{kk} = dCostdBias{kk}+costbias{kk};
         end
     end
-    [myNet] = GradientDescent(myNet,dCostdWeight,dCostdBias,batchSize,eta,numImages,lambda);
+    [myNet] = GradientDescent(myNet,dCostdWeight,dCostdBias,batchSize,eta,min(runs*batchSize,numImages),lambda);
 %     clear indeces;% dCostdWeight dCostdBias;
     disp(ii/runs);
 end
@@ -100,7 +100,7 @@ for kk=1:numImages
             end
         end
     end
-    Input(kk,:,:) = temp+normrnd(0,0.1+rand*0.4,[50,50]);
+    Input(kk,:,:) = temp+normrnd(0,0.2+rand*0.5,[50,50]); % slightly more noise in testing
     
     edges = edge(temp,'Canny');
     DesireOutput(kk,:,:) = double(edges(3:end-2,3:end-2));
