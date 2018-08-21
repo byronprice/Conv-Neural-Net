@@ -10,9 +10,7 @@ function [myNet] = ConvNetwork(NetworkMatrix)
 %         nodes per filter, and nodes in the input and output layers ...
 %         in the preceding example, 50x50 is the size of the input image,
 %         10x10 is the size of each of the filters, 10 is the number of
-%         filters, 2 is the number of filter layers, and the output layer in this case
-%         is about the same size as the input layer (the size of the valid
-%         convolution of the filter and the input image)
+%         filters, 2 is the size of the output layer
 % OUTPUT: Structure array with randomized weights and biases representing
 %           the network.  Use standard normal random variables for initial
 %           values.
@@ -23,17 +21,12 @@ function [myNet] = ConvNetwork(NetworkMatrix)
 
 input = zeros(NetworkMatrix(1,1),NetworkMatrix(1,2));
 filter = ones(NetworkMatrix(2,1),NetworkMatrix(2,2));
-numLayers = NetworkMatrix(3,2);
+numLayers = 1;
 numFilters = NetworkMatrix(3,1);
+outNodes = NetworkMatrix(3,2);
 
-outputSize = [];
-inputSize = [];
-for ii=1:numLayers
-    inputSize = [inputSize;size(input)];
-    output = conv2(input,filter,'valid');
-    outputSize = [outputSize;size(output)];
-    input = output;
-end
+outputSize = size(conv2(input,filter,'valid'));
+inputSize = size(input);
 
 field = 'Weights';
 field2 = 'Biases';
@@ -58,12 +51,11 @@ for jj=1:numLayers
         value2{1}{index} = normrnd(0,1);
         index = index+1;
     end
-    value{1}{index} = normrnd(0,1/sqrt(numFilters),[numFilters,1]);
-    value2{1}{index} = normrnd(0,1);
+    fullSize = numFilters*prod(outputSize);
+    value{1}{index} = normrnd(0,1/sqrt(fullSize),[fullSize,outNodes]);
+    value2{1}{index} = normrnd(0,1,[outNodes,1]);
     index = index+1;
 end
-
-
 
 value3 = (numFilters+1)*numLayers;
 value4 = numFilters;

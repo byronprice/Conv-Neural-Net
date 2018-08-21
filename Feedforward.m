@@ -27,16 +27,16 @@ X = Input;
 for jj=1:Network.numLayers
     filterIndex = (Network.numFilters+1)*(jj-1)+1;
     index = (Network.numFilters+1)*jj;
-    OutputMatrix = zeros(Network.outputSize(jj,:));
+    OutputMatrix = zeros([Network.outputSize,Network.numFilters]);
     for ii=1:Network.numFilters
         temp = conv2(X,Network.Weights{filterIndex},'valid');
         Z{filterIndex} = temp+Network.Biases{filterIndex};
         Output{filterIndex} = Swish(Z{filterIndex});
-        OutputMatrix = OutputMatrix+Output{filterIndex}.*Network.Weights{index}(ii);
+        OutputMatrix(:,:,ii) = Output{filterIndex};%.*Network.Weights{index}(ii);
         filterIndex = filterIndex+1;
     end
     
-    Z{index} = OutputMatrix+Network.Biases{index};
+    Z{index} = Network.Weights{index}'*OutputMatrix(:)+Network.Biases{index};
     Output{index} = Swish(Z{index});
     X = Output{index};
 end

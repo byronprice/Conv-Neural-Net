@@ -1,11 +1,11 @@
 % ConvPerceptron.m
-% Created: 2018/07/16, 24 Cummington, Boston
+% Created: 2018/08/21, 24 Cummington, Boston
 %  Byron Price
-% Updated: 2018/07/16
+% Updated: 2018/08/21
 %   By: Byron Price
 
-%% This code will implement a convolutional neural network, which will
-%% hopefully be able to detect a mouse's pupil
+%% This code will implement a convolutional neural network that 
+%%  will be capable of recognizing handwritten text
 
 %% Simple perceptron rule
 %%   If w is a connection strength vector (or weight) 
@@ -19,136 +19,103 @@
 %%  If x is an input vector and w a connection strength
 %%  vector, then output = 1/(1+exp(-(w*x+b)))
 %%
+%%  Here, I'm using an activation function known as the Swish, see the function
+%%   Swish.m for more information.
 %% See www.neuralnetworksanddeeplearning.com for more information.
 
-%% CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
-imSize = 100;filterSize = 5;numFilters = 10;numLayers = 3;
-NetworkStructure = [imSize,imSize;filterSize,filterSize;numFilters,numLayers];
-myNet = ConvNetwork(NetworkStructure); % from a function
-     % in this directory, builds a convolutional neural network
+load('TrainingData.mat')
+
+numImages = size(Images,2);
+numPixels = sqrt(size(Images,1));
+
+% CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
+numDigits = 10;
+filterSize = 5;
+numFilters = 10;
+% myNet = ConvNetwork([numPixels,numPixels;filterSize,filterSize;numFilters,numDigits]); % from a function
+     % in this directory, builds a convolutional neural net
      
-input = zeros(imSize,imSize);
-for ii=1:numLayers
-    input = conv2(input,ones(filterSize,filterSize),'valid');
-end
+DesireOutput = zeros(numDigits,numImages);
 
-outSize = size(input);
- 
-numImages = 50000;
-Input = zeros(numImages,imSize,imSize);
-DesireOutput = zeros(numImages,outSize(1),outSize(2));
-
-cutSize = floor(filterSize/2)*numLayers+1;
-for kk=1:numImages
-    temp = ones(imSize,imSize);
-    centerX = rand*30+35;
-    centerY = rand*30+35;
-    circleSize = 3+rand*20;
-    for ii=0:imSize-1
-        for jj=0:imSize-1
-            dist = sqrt((ii-centerX).^2+(jj-centerY).^2);
-            if dist<circleSize
-                temp(ii+1,jj+1) = 0.2;
-            end
+for ii=1:numImages
+    numVector = zeros(numDigits,1);
+    for jj=1:numDigits
+        if Labels(ii) == jj-1
+            numVector(jj) = 1;
+            DesireOutput(:,ii) = numVector;
         end
     end
-    Input(kk,:,:) = temp;%+normrnd(0,0.1+rand*0.4,[imSize,imSize]);
-    
-    edges = edge(temp,'Canny');
-    DesireOutput(kk,:,:) = double(edges(cutSize:end-(cutSize-1),cutSize:end-(cutSize-1)));
 end
 
-%% STOCHASTIC GRADIENT DESCENT
+% STOCHASTIC GRADIENT DESCENT
 batchSize = 10; % make mini batches and run the algorithm
      % on those "runs" times
 runs = 5e4;
-eta = 0.1; % learning rate
-lambda = 10; % L2 regularization parameter
+eta = 0.01; % learning rate
+lambda = 0; % L2 regularization parameter
 
-numFilters = myNet.numFilters;
-numLayers = myNet.numLayers;
 numCalcs = myNet.numCalcs;
+numFilters = myNet.numFilters;
 dCostdWeight = cell(1,numCalcs);
 dCostdBias = cell(1,numCalcs);
 
 for ii=1:runs
     indeces = ceil(rand([batchSize,1]).*(numImages-1));
-    
-    filterIndex = 1;
-    for kk=1:numLayers
-        index = (numFilters+1)*kk;
-        for jj=1:numFilters
-            dCostdWeight{filterIndex} = zeros(myNet.networkStructure(2,1),myNet.networkStructure(2,2));
-            dCostdBias{filterIndex} = zeros(1,1);
-            filterIndex = filterIndex+1;
-        end
-        dCostdWeight{index} = zeros(myNet.numFilters,1);
-        dCostdBias{index} = zeros(1,1);
-        filterIndex = filterIndex+1;
+    for jj=1:numCalcs
+        dCostdWeight{jj} = zeros(size(myNet.Weights{jj}));
+        dCostdBias{jj} = zeros(size(myNet.Biases{jj}));
     end
     for jj=1:batchSize
         index = indeces(jj);
-        [costweight,costbias] = BackProp(squeeze(Input(index,:,:)),myNet,...
-        squeeze(DesireOutput(index,:,:)));
+        [costweight,costbias] = BackProp(reshape(Images(:,index),[numPixels,numPixels]),myNet,...
+        DesireOutput(:,index));
         for kk=1:numCalcs
             dCostdWeight{kk} = dCostdWeight{kk}+costweight{kk};
             dCostdBias{kk} = dCostdBias{kk}+costbias{kk};
         end
     end
-    [myNet] = GradientDescent(myNet,dCostdWeight,dCostdBias,batchSize,eta,min(runs*batchSize,numImages),lambda);
+    [myNet] = GradientDescent(myNet,dCostdWeight,dCostdBias,batchSize,eta,numImages,lambda);
 %     clear indeces;% dCostdWeight dCostdBias;
-%     disp(ii/runs);
 end
 
-%% COMPARE ON TEST DATA
-numImages = 1000;
-Input = zeros(numImages,imSize,imSize);
-DesireOutput = zeros(numImages,outSize(1),outSize(2));
+% COMPARE ON TEST DATA
+clear Images Labels;
+load('TestData.mat')
+numImages = size(Images,2);
+numPixels = sqrt(size(Images,1));
+numDigits = 10;
 
-for kk=1:numImages
-    temp = ones(imSize,imSize);
-    centerX = rand*30+35;
-    centerY = rand*30+35;
-    circleSize = 3+rand*20;
-    for ii=0:imSize-1
-        for jj=0:imSize-1
-            dist = sqrt((ii-centerX).^2+(jj-centerY).^2);
-            if dist<circleSize
-                temp(ii+1,jj+1) = 0.2;
-            end
+DesireOutput = zeros(numDigits,numImages);
+
+for ii=1:numImages
+    numVector = zeros(numDigits,1);
+    for jj=1:numDigits
+        if Labels(ii) == jj-1
+            numVector(jj) = 1;
+            DesireOutput(:,ii) = numVector;
         end
     end
-    Input(kk,:,:) = temp;%+normrnd(0,0.2+rand*0.5,[imSize,imSize]); % more noise in test case
-    
-    edges = edge(temp,'Canny');
-    DesireOutput(kk,:,:) = double(edges(cutSize:end-(cutSize-1),cutSize:end-(cutSize-1)));
 end
 
-accuracy = zeros(numImages,1);
-truePositives = zeros(numImages,1);
-falsePositives = zeros(numImages,1);
+classifiedVals = zeros(numImages,1);
+count = 0;
 for ii=1:numImages
-    [Output,~] = Feedforward(squeeze(Input(ii,:,:)),myNet);
-    guessIm = Output{end};
-    logicalIm = guessIm>0.1;
-    new = squeeze(DesireOutput(ii,:,:))+logicalIm;
-    vals = find(new==2 | new==0);
-    accuracy(ii) = length(vals)./prod(outSize);
-    
-    trueVals = find(squeeze(DesireOutput(ii,:,:))==1);
-    falseVals = find(squeeze(DesireOutput(ii,:,:))==0);
-    
-    vals = find(logicalIm==1);
-    truePositives(ii) = sum(ismember(trueVals,vals))./length(trueVals);
-    
-    falsePositives(ii) = sum(ismember(falseVals,vals))./length(falseVals);
+    [Output,Z] = Feedforward(reshape(Images(:,ii),[numPixels,numPixels]),myNet);
+    [~,realVal] = max(DesireOutput(:,ii));
+    [~,netVal] = max(Output{end});
+    classifiedVals(ii) = netVal-1;
+    if realVal == netVal
+        count = count+1;
+    end
 end
-Accuracy = mean(accuracy);
-TPR = mean(truePositives);
-FPR = mean(falsePositives);
+Accuracy = count/numImages;
+
 fprintf('Accuracy: %3.3f\n',Accuracy);
-fprintf('True Positive Rate: %3.3f\n',TPR);
-fprintf('False Positive Rate: %3.3f\n',FPR);
-figure;histogram(accuracy);title('Accuracy');
-figure;histogram(truePositives);title('True Positive Rate');
-figure;histogram(falsePositives);title('False Positive Rate');
+
+% for ii=1:5
+%     index = ceil(rand*(numImages-1));
+%     digit = classifiedVals(index);
+%     image = reshape(Images(:,index),[28,28]);
+%     figure();imagesc(image);title(sprintf('Classified as a(n) %i',digit));
+%     colormap gray;
+% end
