@@ -19,41 +19,57 @@ function [dCostdWeight,dCostdBias] = BackProp(Input,Network,DesireOutput)
 
 [Output,Z] = Feedforward(Input,Network);
 
-Activations = cell(1,Network.numFilters+1);
+Activations = cell(1,Network.numCalcs);
 Activations{1} = Input;
-for ii=2:Network.numFilters+1
+for ii=2:Network.numCalcs
     Activations{ii} = Output{ii-1};
 end
 
-dCostdWeight = cell(1,Network.numFilters+1);
-dCostdBias = cell(1,Network.numFilters+1);
+dCostdWeight = cell(1,Network.numCalcs);
+dCostdBias = cell(1,Network.numCalcs);
 
 %deltaL = (Z{end}-DesireOutput); % linear output neuron, mean-squared error cost
 deltaL = (Output{end}-DesireOutput); % cross-entropy cost with sigmoid/swish output neurons
                                 % .*SwishPrime(Output{end}); % add this back for 
                                 % mean-squared error cost function, unless
                                 % you want the output neuron to be linear
-temp = zeros(Network.numFilters,1);
-for ii=1:Network.numFilters
-   temp(ii) = mean(mean(Activations{ii+1}.*deltaL));
-end
-dCostdWeight{end} = temp;
-dCostdBias{end} = mean(deltaL(:));
-
-origDeltaL = deltaL;
-for ii=1:Network.numFilters
-    W = Network.Weights{Network.numFilters+1};
-    deltaL = (W(ii)*origDeltaL).*SwishPrime(Z{ii});
-    
-    temp = zeros(Network.networkStructure(2,1),Network.networkStructure(2,2));
-    for jj=1:Network.outputSize(1)
-        for kk=1:Network.outputSize(2)
-            temp = temp+Activations{1}(jj:jj+Network.networkStructure(2,1)-1,kk:kk+Network.networkStructure(2,2)-1)*deltaL(jj,kk);
-        end
+for ll=Network.numLayers:-1:1
+    activationIndex = (Network.numFilters+1)*(ll-1)+1;
+    index = (Network.numFilters+1)*ll;
+    temp = zeros(Network.numFilters,1);
+    for ii=1:Network.numFilters
+        temp(ii) = mean(mean(Activations{activationIndex+ii}.*deltaL));
     end
-    dCostdWeight{ii} = temp./prod(Network.outputSize);
-    dCostdBias{ii} = mean(deltaL(:));
+    dCostdWeight{index} = temp;
+    dCostdBias{index} = mean(deltaL(:));
+
+    origDeltaL = deltaL;
+    for ii=1:Network.numFilters
+        W = Network.Weights{index};
+        deltaL = (W(ii)*origDeltaL).*SwishPrime(Z{activationIndex+ii-1});
+        temp = zeros(Network.networkStructure(2,1),Network.networkStructure(2,2));
+        for jj=1:Network.outputSize(ll,1)
+            for kk=1:Network.outputSize(ll,2)
+                temp = temp+Activations{activationIndex}(jj:jj+Network.networkStructure(2,1)-1,kk:kk+Network.networkStructure(2,2)-1)*deltaL(jj,kk);
+            end
+        end
+        dCostdWeight{activationIndex+ii-1} = temp./prod(Network.outputSize(ll,:));
+        dCostdBias{activationIndex+ii-1} = mean(deltaL(:));
+    end
+    if ll>1
+        divideIm = conv2(ones(Network.outputSize(ll,:)),ones(Network.networkStructure(2,:)));
+        newDeltaL = zeros(Network.outputSize(ll-1,:));
+        for ii=1:Network.numFilters
+            W = Network.Weights{index};
+            deltaL = (W(ii)*origDeltaL).*SwishPrime(Z{activationIndex+ii-1});
+            temp = conv2(deltaL,Network.Weights{activationIndex+ii-1});
+            temp = temp./divideIm;
+            newDeltaL = newDeltaL+temp;
+        end
+        deltaL = (newDeltaL./Network.numFilters).*SwishPrime(Z{(Network.numFilters+1)*(ll-1)});
+    end
 end
+
 end
 
 % cross-entropy cost function
