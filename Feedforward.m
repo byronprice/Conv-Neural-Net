@@ -17,24 +17,28 @@ function [Output,Z] = Feedforward(Input,Network)
 % 
 % Created: 2018/07/13, 24 Cummington, Boston
 %  Byron Price
-% Updated: 2018/07/13
+% Updated: 2018/07/17
 %  By: Byron Price
 
-Output = cell(1,Network.numFilters+1);
-Z = cell(1,Network.numFilters+1);
+Output = cell(1,Network.numCalcs);
+Z = cell(1,Network.numCalcs);
 
 X = Input;
-index = Network.numFilters+1;
-OutputMatrix = zeros(Network.outputSize);
-for ii=1:Network.numFilters
-    temp = conv2(X,Network.Weights{ii},'valid');
-    Z{ii} = temp+Network.Biases{ii};
-    Output{ii} = Swish(Z{ii});
+for jj=1:Network.numLayers
+    filterIndex = (Network.numFilters+1)*(jj-1)+1;
+    index = (Network.numFilters+1)*jj;
+    OutputMatrix = zeros(Network.outputSize(jj,:));
+    for ii=1:Network.numFilters
+        temp = conv2(X,Network.Weights{filterIndex},'valid');
+        Z{filterIndex} = temp+Network.Biases{filterIndex};
+        Output{filterIndex} = Swish(Z{filterIndex});
+        OutputMatrix = OutputMatrix+Output{filterIndex}.*Network.Weights{index}(ii);
+        filterIndex = filterIndex+1;
+    end
     
-    OutputMatrix = OutputMatrix+Output{ii}.*Network.Weights{index}(ii);
+    Z{index} = OutputMatrix+Network.Biases{index};
+    Output{index} = Swish(Z{index});
+    X = Output{index};
 end
-
-Z{index} = OutputMatrix+Network.Biases{index};
-Output{index} = Swish(Z{index});
 
 end
