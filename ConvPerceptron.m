@@ -21,53 +21,71 @@
 %%
 %% See www.neuralnetworksanddeeplearning.com for more information.
 
-% CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
-NetworkStructure = [50,50;5,5;20,0];
+%% CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
+imSize = 100;filterSize = 5;numFilters = 10;numLayers = 3;
+NetworkStructure = [imSize,imSize;filterSize,filterSize;numFilters,numLayers];
 myNet = ConvNetwork(NetworkStructure); % from a function
      % in this directory, builds a convolutional neural network
- 
-numImages = 10000;
-Input = zeros(numImages,50,50);
-DesireOutput = zeros(numImages,46,46);
+     
+input = zeros(imSize,imSize);
+for ii=1:numLayers
+    input = conv2(input,ones(filterSize,filterSize),'valid');
+end
 
+outSize = size(input);
+ 
+numImages = 50000;
+Input = zeros(numImages,imSize,imSize);
+DesireOutput = zeros(numImages,outSize(1),outSize(2));
+
+cutSize = floor(filterSize/2)*numLayers+1;
 for kk=1:numImages
-    temp = ones(50,50);
-    centerX = rand*20+15;
-    centerY = rand*20+15;
-    circleSize = 5+rand*10;
-    for ii=0:49
-        for jj=0:49
+    temp = ones(imSize,imSize);
+    centerX = rand*30+35;
+    centerY = rand*30+35;
+    circleSize = 3+rand*20;
+    for ii=0:imSize-1
+        for jj=0:imSize-1
             dist = sqrt((ii-centerX).^2+(jj-centerY).^2);
             if dist<circleSize
                 temp(ii+1,jj+1) = 0.2;
             end
         end
     end
-    Input(kk,:,:) = temp+normrnd(0,0.1+rand*0.4,[50,50]);
+    Input(kk,:,:) = temp;%+normrnd(0,0.1+rand*0.4,[imSize,imSize]);
     
     edges = edge(temp,'Canny');
-    DesireOutput(kk,:,:) = double(edges(3:end-2,3:end-2));
+    DesireOutput(kk,:,:) = double(edges(cutSize:end-(cutSize-1),cutSize:end-(cutSize-1)));
 end
 
-% STOCHASTIC GRADIENT DESCENT
+%% STOCHASTIC GRADIENT DESCENT
 batchSize = 10; % make mini batches and run the algorithm
      % on those "runs" times
 runs = 5e4;
-eta = 0.01; % learning rate
-lambda = 1; % L2 regularization parameter
+eta = 0.1; % learning rate
+lambda = 10; % L2 regularization parameter
 
-numCalcs = myNet.numFilters+1;
+numFilters = myNet.numFilters;
+numLayers = myNet.numLayers;
+numCalcs = myNet.numCalcs;
 dCostdWeight = cell(1,numCalcs);
 dCostdBias = cell(1,numCalcs);
 
 for ii=1:runs
     indeces = ceil(rand([batchSize,1]).*(numImages-1));
-    for jj=1:numCalcs-1
-        dCostdWeight{jj} = zeros(myNet.networkStructure(2,1),myNet.networkStructure(2,2));
-        dCostdBias{jj} = zeros(1,1);
+    
+    filterIndex = 1;
+    for kk=1:numLayers
+        index = (numFilters+1)*kk;
+        for jj=1:numFilters
+            dCostdWeight{filterIndex} = zeros(myNet.networkStructure(2,1),myNet.networkStructure(2,2));
+            dCostdBias{filterIndex} = zeros(1,1);
+            filterIndex = filterIndex+1;
+        end
+        dCostdWeight{index} = zeros(myNet.numFilters,1);
+        dCostdBias{index} = zeros(1,1);
+        filterIndex = filterIndex+1;
     end
-    dCostdWeight{end} = zeros(myNet.numFilters,1);
-    dCostdBias{end} = zeros(1,1);
     for jj=1:batchSize
         index = indeces(jj);
         [costweight,costbias] = BackProp(squeeze(Input(index,:,:)),myNet,...
@@ -79,31 +97,31 @@ for ii=1:runs
     end
     [myNet] = GradientDescent(myNet,dCostdWeight,dCostdBias,batchSize,eta,min(runs*batchSize,numImages),lambda);
 %     clear indeces;% dCostdWeight dCostdBias;
-    disp(ii/runs);
+%     disp(ii/runs);
 end
 
-% COMPARE ON TEST DATA
+%% COMPARE ON TEST DATA
 numImages = 1000;
-Input = zeros(numImages,50,50);
-DesireOutput = zeros(numImages,46,46);
+Input = zeros(numImages,imSize,imSize);
+DesireOutput = zeros(numImages,outSize(1),outSize(2));
 
 for kk=1:numImages
-    temp = ones(50,50);
-    centerX = rand*20+15;
-    centerY = rand*20+15;
-    circleSize = 5+rand*10;
-    for ii=0:49
-        for jj=0:49
+    temp = ones(imSize,imSize);
+    centerX = rand*30+35;
+    centerY = rand*30+35;
+    circleSize = 3+rand*20;
+    for ii=0:imSize-1
+        for jj=0:imSize-1
             dist = sqrt((ii-centerX).^2+(jj-centerY).^2);
             if dist<circleSize
                 temp(ii+1,jj+1) = 0.2;
             end
         end
     end
-    Input(kk,:,:) = temp+normrnd(0,0.2+rand*0.5,[50,50]); % slightly more noise in testing
+    Input(kk,:,:) = temp;%+normrnd(0,0.2+rand*0.5,[imSize,imSize]); % more noise in test case
     
     edges = edge(temp,'Canny');
-    DesireOutput(kk,:,:) = double(edges(3:end-2,3:end-2));
+    DesireOutput(kk,:,:) = double(edges(cutSize:end-(cutSize-1),cutSize:end-(cutSize-1)));
 end
 
 accuracy = zeros(numImages,1);
@@ -115,7 +133,7 @@ for ii=1:numImages
     logicalIm = guessIm>0.1;
     new = squeeze(DesireOutput(ii,:,:))+logicalIm;
     vals = find(new==2 | new==0);
-    accuracy(ii) = length(vals)./(46*46);
+    accuracy(ii) = length(vals)./prod(outSize);
     
     trueVals = find(squeeze(DesireOutput(ii,:,:))==1);
     falseVals = find(squeeze(DesireOutput(ii,:,:))==0);
