@@ -23,6 +23,7 @@
 %%   Swish.m for more information.
 %% See www.neuralnetworksanddeeplearning.com for more information.
 
+
 load('TrainingData.mat')
 
 numImages = size(Images,2);
@@ -31,10 +32,10 @@ numPixels = sqrt(size(Images,1));
 % CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
 numDigits = 10;
 filterSize = 5;
-numFilters = 10;
-% myNet = ConvNetwork([numPixels,numPixels;filterSize,filterSize;numFilters,numDigits]); % from a function
-     % in this directory, builds a convolutional neural net
-     
+numFilters = 11;
+myNet = ConvNetwork([numPixels,numPixels;filterSize,filterSize;numFilters,numDigits]); % from a function
+% in this directory, builds a convolutional neural net
+
 DesireOutput = zeros(numDigits,numImages);
 
 for ii=1:numImages
@@ -49,10 +50,10 @@ end
 
 % STOCHASTIC GRADIENT DESCENT
 batchSize = 10; % make mini batches and run the algorithm
-     % on those "runs" times
+% on those "runs" times
 runs = 5e4;
 eta = 0.01; % learning rate
-lambda = 0; % L2 regularization parameter
+lambda = 10; % L2 regularization parameter
 
 numCalcs = myNet.numCalcs;
 numFilters = myNet.numFilters;
@@ -68,14 +69,14 @@ for ii=1:runs
     for jj=1:batchSize
         index = indeces(jj);
         [costweight,costbias] = BackProp(reshape(Images(:,index),[numPixels,numPixels]),myNet,...
-        DesireOutput(:,index));
+            DesireOutput(:,index));
         for kk=1:numCalcs
             dCostdWeight{kk} = dCostdWeight{kk}+costweight{kk};
             dCostdBias{kk} = dCostdBias{kk}+costbias{kk};
         end
     end
     [myNet] = GradientDescent(myNet,dCostdWeight,dCostdBias,batchSize,eta,numImages,lambda);
-%     clear indeces;% dCostdWeight dCostdBias;
+    %     clear indeces;% dCostdWeight dCostdBias;
 end
 
 % COMPARE ON TEST DATA
@@ -110,7 +111,8 @@ for ii=1:numImages
 end
 Accuracy = count/numImages;
 
-fprintf('Accuracy: %3.3f\n',Accuracy);
+fprintf('Accuracy: %3.3f\n\n',Accuracy);
+
 
 % for ii=1:5
 %     index = ceil(rand*(numImages-1));
