@@ -16,16 +16,16 @@ function [myNet] = ConvNetwork(NetworkMatrix)
 %           values.
 % Created: 2018/07/13, 24 Cummington, Boston
 %  Byron Price
-% Updated: 2018/07/17
+% Updated: 2018/08/30
 %  By: Byron Price
 
 input = zeros(NetworkMatrix(1,1),NetworkMatrix(1,2));
 filter = ones(NetworkMatrix(2,1),NetworkMatrix(2,2));
-numLayers = 1;
+numLayers = 1;maxPool = 2;
 numFilters = NetworkMatrix(3,1);
 outNodes = NetworkMatrix(3,2);
 
-outputSize = size(conv2(input,filter,'valid'));
+outputSize = size(conv2(input,filter,'valid'))./maxPool;
 inputSize = size(input);
 
 field = 'Weights';
@@ -36,6 +36,7 @@ field5 = 'networkStructure';
 field6 = 'outputSize';
 field7 = 'numLayers';
 field8 = 'inputSize';
+field9 = 'maxPool';
 
 
 value = cell(1,1);
@@ -63,6 +64,7 @@ value5 = NetworkMatrix;
 value6 = outputSize;
 value7 = numLayers;
 value8 = inputSize;
+value9 = maxPool;
 myNet = struct(field,value,field2,value2,field3,value3,field4,value4,...
-    field5,value5,field6,value6,field7,value7,field8,value8);
+    field5,value5,field6,value6,field7,value7,field8,value8,field9,value9);
 end

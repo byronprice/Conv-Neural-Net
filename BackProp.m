@@ -50,10 +50,10 @@ for ll=Network.numLayers:-1:1
     for ii=1:Network.numFilters
         indeces = 1+fullSize*(ii-1):fullSize*ii;
         tmp = W(indeces,:)*origDeltaL;
-        deltaL = reshape(tmp,Network.outputSize).*SwishPrime(Z{activationIndex+ii-1});
+        deltaL = kron(reshape(tmp,Network.outputSize),ones(Network.maxPool)).*SwishPrime(Z{activationIndex+ii-1});
         temp = zeros(Network.networkStructure(2,1),Network.networkStructure(2,2));
-        for jj=1:Network.outputSize(1)
-            for kk=1:Network.outputSize(2)
+        for jj=1:Network.outputSize(1)*Network.maxPool
+            for kk=1:Network.outputSize(2)*Network.maxPool
                 temp = temp+Activations{activationIndex}(jj:jj+Network.networkStructure(2,1)-1,kk:kk+Network.networkStructure(2,2)-1)*deltaL(jj,kk);
             end
         end

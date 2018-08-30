@@ -23,6 +23,8 @@ function [Output,Z] = Feedforward(Input,Network)
 Output = cell(1,Network.numCalcs);
 Z = cell(1,Network.numCalcs);
 
+idx = kron(reshape(1:(Network.outputSize(1)*Network.outputSize(2)),Network.outputSize(2),[]).',ones(Network.maxPool));
+
 X = Input;
 for jj=1:Network.numLayers
     filterIndex = (Network.numFilters+1)*(jj-1)+1;
@@ -31,8 +33,10 @@ for jj=1:Network.numLayers
     for ii=1:Network.numFilters
         temp = conv2(X,Network.Weights{filterIndex},'valid');
         Z{filterIndex} = temp+Network.Biases{filterIndex};
-        Output{filterIndex} = Swish(Z{filterIndex});
-        OutputMatrix(:,:,ii) = Output{filterIndex};%.*Network.Weights{index}(ii);
+        temp = Swish(Z{filterIndex});
+        temp = reshape(accumarray(idx(:),temp(:),[],@max),Network.outputSize(2),[]).';
+        Output{filterIndex} = temp;
+        OutputMatrix(:,:,ii) = temp;
         filterIndex = filterIndex+1;
     end
     
