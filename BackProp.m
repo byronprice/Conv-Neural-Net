@@ -37,7 +37,7 @@ deltaL = (Output{end}-DesireOutput); % cross-entropy cost with sigmoid/swish out
 for ll=Network.numLayers:-1:1
     activationIndex = (Network.numFilters+1)*(ll-1)+1;
     index = (Network.numFilters+1)*ll;
-    zeros([Network.outputSize,Network.numFilters]);
+    temp = zeros([Network.outputSize,Network.numFilters]);
     for ii=1:Network.numFilters
         temp(:,:,ii) = Activations{activationIndex+ii};
     end
