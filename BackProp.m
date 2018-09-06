@@ -37,10 +37,7 @@ deltaL = (Output{end}-DesireOutput); % cross-entropy cost with sigmoid/swish out
 for ll=Network.numLayers:-1:1
     activationIndex = (Network.numFilters+1)*(ll-1)+1;
     index = (Network.numFilters+1)*ll;
-    temp = zeros([Network.outputSize,Network.numFilters]);
-    for ii=1:Network.numFilters
-        temp(:,:,ii) = Activations{activationIndex+ii};
-    end
+    temp = cat(3,Activations{activationIndex+1:activationIndex+Network.numFilters});
     dCostdWeight{index} = temp(:)*deltaL';
     dCostdBias{index} = deltaL;
 
@@ -57,6 +54,7 @@ for ll=Network.numLayers:-1:1
                 temp = temp+Activations{activationIndex}(jj:jj+Network.networkStructure(2,1)-1,kk:kk+Network.networkStructure(2,2)-1)*deltaL(jj,kk);
             end
         end
+%         temp = conv2(Activations{activationIndex},deltaL,'valid');
         dCostdWeight{activationIndex+ii-1} = temp;
         dCostdBias{activationIndex+ii-1} = sum(deltaL(:));
     end
