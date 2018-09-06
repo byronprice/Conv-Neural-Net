@@ -32,7 +32,7 @@ numPixels = sqrt(size(Images,1));
 % CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
 numDigits = 10;
 filterSize = 5;
-numFilters = 11;
+numFilters = 5;
 myNet = ConvNetwork([numPixels,numPixels;filterSize,filterSize;numFilters,numDigits]); % from a function
 % in this directory, builds a convolutional neural net
 

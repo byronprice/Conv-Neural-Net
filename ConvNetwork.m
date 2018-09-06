@@ -37,6 +37,9 @@ field6 = 'outputSize';
 field7 = 'numLayers';
 field8 = 'inputSize';
 field9 = 'maxPool';
+field10 = 'idx1';
+field11 = 'idx2';
+field12 = 'idx3';
 
 
 value = cell(1,1);
@@ -65,6 +68,30 @@ value6 = outputSize;
 value7 = numLayers;
 value8 = inputSize;
 value9 = maxPool;
+
+inds = [];
+for jj=1:outputSize(1)*maxPool
+    for kk=1:outputSize(2)*maxPool
+        temp = zeros(inputSize);
+        temp(jj:jj+NetworkMatrix(2,1)-1,kk:kk+NetworkMatrix(2,2)-1) = 1;
+        inds = [inds;find(temp)];
+    end
+end
+value10 = inds;
+
+inds = repmat((1:numel(filter))',[length(inds)/numel(filter),1]);
+value11 = inds;
+
+inds = [];
+for jj=1:outputSize(1)*maxPool
+    for kk=1:outputSize(2)*maxPool
+        temp = zeros(outputSize*maxPool);temp(jj,kk) = 1;
+        inds = [inds;repmat(find(temp),[numel(filter),1])];
+    end
+end
+value12 = inds;
+        
 myNet = struct(field,value,field2,value2,field3,value3,field4,value4,...
-    field5,value5,field6,value6,field7,value7,field8,value8,field9,value9);
+    field5,value5,field6,value6,field7,value7,field8,value8,field9,value9,...
+    field10,value10,field11,value11,field12,value12);
 end
