@@ -51,7 +51,7 @@ end
 % STOCHASTIC GRADIENT DESCENT
 batchSize = 10; % make mini batches and run the algorithm
 % on those "runs" times
-runs = 5e4;
+runs = 5e3;
 eta = 0.01; % learning rate
 lambda = 10; % L2 regularization parameter
 
