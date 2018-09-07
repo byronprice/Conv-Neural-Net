@@ -49,8 +49,8 @@ for ll=Network.numLayers:-1:1
         tmp = W(indeces,:)*origDeltaL;
         deltaL = kron(reshape(tmp,Network.outputSize),ones(Network.maxPool)).*SwishPrime(Z{activationIndex+ii-1});
 
-        dCostdWeight{activationIndex+ii-1} = fliplr(reshape(accumarray(Network.idx2,Activations{activationIndex}(Network.idx1).*deltaL(Network.idx3)),...
-            [Network.networkStructure(2,1),Network.networkStructure(2,2)]));
+        dCostdWeight{activationIndex+ii-1} = rot90(reshape(accumarray(Network.idx2,Activations{activationIndex}(Network.idx1).*deltaL(Network.idx3)),...
+            [Network.networkStructure(2,1),Network.networkStructure(2,2)]),2);
         dCostdBias{activationIndex+ii-1} = sum(deltaL(:));
     end
 %     if ll>1
