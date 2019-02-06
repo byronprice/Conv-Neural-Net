@@ -50,8 +50,7 @@ for ii=1:Network.numFilters(end)
     tmp = W(indices,:)*origDeltaL;
     deltaL = kron(reshape(tmp,Network.outputSize{end}),ones(Network.maxPool)).*SwishPrime(Z{neuronIndex+ii-1});
     
-    dCostdWeight{neuronIndex+ii-1} = conv2(Activations{activationIndex+ii},deltaL,'valid');
-%     conv2(rot90(Activations{activationIndex+ii},2),deltaL,'valid');
+    dCostdWeight{neuronIndex+ii-1} = conv2(rot90(Activations{activationIndex+ii},2),deltaL,'valid');
     dCostdBias{neuronIndex+ii-1} = deltaL;
 end
 
@@ -63,15 +62,14 @@ for ii=(Network.numLayers-1):-1:1
         if ii==1
             activationIndex = 1;
         else
-            activationIndex = Network.numFilters(ii)*(Network.numLayers-2)+1+jj;
+            activationIndex = Network.numFilters(ii)*(ii-2)+1+jj;
         end
         
         deltaL = dCostdBias{index+jj-1};
         W = Network.Weights{index+jj-1};
         
         deltaL = kron(conv2(rot90(W,2),deltaL,'full'),ones(Network.maxPool)).*SwishPrime(Z{neuronIndex+jj-1});
-        dCostdWeight{neuronIndex+jj-1} = conv2(Activations{activationIndex},deltaL,'valid');
-%         conv2(rot90(Activations{activationIndex},2),deltaL,'valid');
+        dCostdWeight{neuronIndex+jj-1} = conv2(rot90(Activations{activationIndex},2),deltaL,'valid');
         dCostdBias{neuronIndex+jj-1} = deltaL;
     end
 end

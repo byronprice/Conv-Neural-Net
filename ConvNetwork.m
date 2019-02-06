@@ -27,12 +27,27 @@ outNodes = NetMatrix{1}{3};
 
 outputSize = cell(1,1);outputSize{1} = cell(numLayers,1);
 inputSize = cell(1,1);inputSize{1} = cell(numLayers,1);
+filterSize = cell(1,1);filterSize{1} = cell(numLayers,1);
 
 numCalcs = 1;
 for ii=1:numLayers
-    filter = zeros(NetMatrix{1}{2}(ii,1),NetMatrix{1}{2}(ii,1));
+    filtLen = NetMatrix{1}{2}(ii,1);
+    filter = zeros(filtLen,filtLen);
     inputSize{1}{ii} = size(input);
+    check = size(conv2(input,filter,'valid'))./maxPool;
+    possLens = 2:10;
+    [~,inds] = sort(abs(possLens-filtLen));
+    possLens = possLens(inds);
+    count = 1;
+    while mod(check(1),1)~=0 & check>1
+       filtLen = possLens(count);
+       filter = zeros(filtLen,filtLen);
+       check = size(conv2(input,filter,'valid'))./maxPool;
+       count = count+1;
+    end
+    filter = zeros(filtLen,filtLen);
     outputSize{1}{ii} = size(conv2(input,filter,'valid'))./maxPool;
+    filterSize{1}{ii} = filtLen;
     input = zeros(outputSize{1}{ii});
     numFilters(ii) = NetMatrix{1}{2}(ii,2);
     numCalcs = numCalcs+numFilters(ii);
@@ -58,7 +73,7 @@ value2{1} = cell(1,numCalcs);
 
 index = 1;
 for jj=1:numLayers
-    currentSize = NetMatrix{1}{2}(jj,1);
+    currentSize = filterSize{1}{jj};
     outSize = outputSize{1}{jj}*maxPool;
   
     for ii=1:numFilters(jj)
