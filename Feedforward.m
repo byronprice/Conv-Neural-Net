@@ -23,26 +23,31 @@ function [Output,Z] = Feedforward(Input,Network)
 Output = cell(1,Network.numCalcs);
 Z = cell(1,Network.numCalcs);
 
-idx = kron(reshape(1:(Network.outputSize(1)*Network.outputSize(2)),Network.outputSize(2),[]).',ones(Network.maxPool));
-
 X = Input;
 for jj=1:Network.numLayers
-    filterIndex = (Network.numFilters+1)*(jj-1)+1;
-    index = (Network.numFilters+1)*jj;
-    OutputMatrix = zeros([Network.outputSize,Network.numFilters]);
-    for ii=1:Network.numFilters
-        temp = conv2(X,Network.Weights{filterIndex},'valid');
+    filterIndex = Network.numFilters(jj)*(jj-1)+1;
+    idx = kron(reshape(1:(Network.outputSize{jj}(1)*Network.outputSize{jj}(2)),Network.outputSize{jj}),ones(Network.maxPool));
+    OutputMatrix = zeros([Network.outputSize{jj},Network.numFilters(jj)]);
+    for ii=1:Network.numFilters(jj)
+        if jj==1
+            temp = conv2(X,Network.Weights{filterIndex},'valid');
+        else
+            temp = conv2(squeeze(X(:,:,ii)),Network.Weights{filterIndex},'valid');
+        end
         Z{filterIndex} = temp+Network.Biases{filterIndex};
         temp = Swish(Z{filterIndex});
-        temp = reshape(accumarray(idx(:),temp(:),[],@max),Network.outputSize(2),[]).';
+        temp = reshape(accumarray(idx(:),temp(:),[],@max),Network.outputSize{jj});
         Output{filterIndex} = temp;
         OutputMatrix(:,:,ii) = temp;
         filterIndex = filterIndex+1;
     end
-    
-    Z{index} = Network.Weights{index}'*OutputMatrix(:)+Network.Biases{index};
-    Output{index} = Swish(Z{index});
-    X = Output{index};
+    X = OutputMatrix;
+%     Z{index} = sum(OutputMatrix,3)+Network.Biases{index};
+%     Output{index} = Swish(Z{index});
+%     X = Output{index};
 end
+
+Z{filterIndex} = Network.Weights{filterIndex}'*X(:)+Network.Biases{filterIndex};
+Output{filterIndex} = Swish(Z{filterIndex});
 
 end

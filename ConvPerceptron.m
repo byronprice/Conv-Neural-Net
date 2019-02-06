@@ -32,8 +32,10 @@ numPixels = sqrt(size(Images,1));
 % CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
 numDigits = 10;
 filterSize = 5;
-numFilters = 5;
-myNet = ConvNetwork([numPixels,numPixels;filterSize,filterSize;numFilters,numDigits]); % from a function
+numFilters = 20;
+numLayers = 2;
+NetMatrix = cell(1,1);NetMatrix{1} = {[numPixels,numPixels],repmat([filterSize,numFilters],[numLayers,1]),numDigits};
+myNet = ConvNetwork(NetMatrix); % from a function
 % in this directory, builds a convolutional neural net
 
 DesireOutput = zeros(numDigits,numImages);
@@ -53,21 +55,20 @@ batchSize = 10; % make mini batches and run the algorithm
 % on those "runs" times
 runs = 1e4;
 eta = 0.01; % learning rate
-lambda = 10; % L2 regularization parameter
+lambda = 1; % L2 regularization parameter
 
 numCalcs = myNet.numCalcs;
-numFilters = myNet.numFilters;
 dCostdWeight = cell(1,numCalcs);
 dCostdBias = cell(1,numCalcs);
 
 for ii=1:runs
-    indeces = ceil(rand([batchSize,1]).*(numImages-1));
+    indices = ceil(rand([batchSize,1]).*(numImages-1));
     for jj=1:numCalcs
         dCostdWeight{jj} = zeros(size(myNet.Weights{jj}));
         dCostdBias{jj} = zeros(size(myNet.Biases{jj}));
     end
     for jj=1:batchSize
-        index = indeces(jj);
+        index = indices(jj);
         [costweight,costbias] = BackProp(reshape(Images(:,index),[numPixels,numPixels]),myNet,...
             DesireOutput(:,index));
         for kk=1:numCalcs

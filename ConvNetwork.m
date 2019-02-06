@@ -1,4 +1,4 @@
-function [myNet] = ConvNetwork(NetworkMatrix)
+function [myNet] = ConvNetwork(NetMatrix)
 %ConvNetwork.m
  % Define an x-filter 2-layer Convolutional Neural Network as a structure array
  %   The network looks like this ...
@@ -16,19 +16,30 @@ function [myNet] = ConvNetwork(NetworkMatrix)
 %           values.
 % Created: 2018/07/13, 24 Cummington, Boston
 %  Byron Price
-% Updated: 2018/08/30
+% Updated: 2018/02/05
 %  By: Byron Price
 
-input = zeros(NetworkMatrix(1,1),NetworkMatrix(1,2));
-filter = ones(NetworkMatrix(2,1),NetworkMatrix(2,2));
-numLayers = 1;maxPool = 2;
-numFilters = NetworkMatrix(3,1);
-outNodes = NetworkMatrix(3,2);
+input = zeros(NetMatrix{1}{1});
+numLayers = size(NetMatrix{1}{2},1);
+maxPool = 2;
+numFilters = zeros(numLayers,1);
+outNodes = NetMatrix{1}{3};
 
-outputSize = size(conv2(input,filter,'valid'))./maxPool;
-inputSize = size(input);
+outputSize = cell(1,1);outputSize{1} = cell(numLayers,1);
+inputSize = cell(1,1);inputSize{1} = cell(numLayers,1);
 
-field = 'Weights';
+numCalcs = 1;
+for ii=1:numLayers
+    filter = zeros(NetMatrix{1}{2}(ii,1),NetMatrix{1}{2}(ii,1));
+    inputSize{1}{ii} = size(input);
+    outputSize{1}{ii} = size(conv2(input,filter,'valid'))./maxPool;
+    input = zeros(outputSize{1}{ii});
+    numFilters(ii) = NetMatrix{1}{2}(ii,2);
+    numCalcs = numCalcs+numFilters(ii);
+end
+
+
+field1 = 'Weights';
 field2 = 'Biases';
 field3 = 'numCalcs';
 field4 = 'numFilters';
@@ -37,61 +48,73 @@ field6 = 'outputSize';
 field7 = 'numLayers';
 field8 = 'inputSize';
 field9 = 'maxPool';
-field10 = 'idx1';
-field11 = 'idx2';
-field12 = 'idx3';
 
 
-value = cell(1,1);
+value1 = cell(1,1);
 value2 = cell(1,1);
 
-value{1} = cell(1,(numFilters+1)*numLayers);
-value2{1} = cell(1,(numFilters+1)*numLayers);
+value1{1} = cell(1,numCalcs);
+value2{1} = cell(1,numCalcs);
 
 index = 1;
 for jj=1:numLayers
-    for ii=1:numFilters
-        value{1}{index} = normrnd(0,1/sqrt(NetworkMatrix(2,1)*NetworkMatrix(2,2)),[NetworkMatrix(2,1),NetworkMatrix(2,2)]);
-        value2{1}{index} = normrnd(0,1);
+    currentSize = NetMatrix{1}{2}(jj,1);
+    outSize = outputSize{1}{jj}*maxPool;
+  
+    for ii=1:numFilters(jj)
+        value1{1}{index} = normrnd(0,1/currentSize,[currentSize,currentSize]);
+        value2{1}{index} = normrnd(0,1/prod(outSize),outSize);
         index = index+1;
     end
-    fullSize = numFilters*prod(outputSize);
-    value{1}{index} = normrnd(0,1/sqrt(fullSize),[fullSize,outNodes]);
-    value2{1}{index} = normrnd(0,1,[outNodes,1]);
-    index = index+1;
+%     value1{1}{index} = normrnd(0,1/sqrt(currentSize),[currentSize,1]);
+%     value2{1}{index} = normrnd(0,1);
+%     index = index+1;
 end
+fullSize = numFilters(end)*prod(outputSize{1}{end});
+value1{1}{index} = normrnd(0,1/sqrt(fullSize),[fullSize,outNodes]);
+value2{1}{index} = normrnd(0,1,[outNodes,1]);
 
-value3 = (numFilters+1)*numLayers;
+value3 = numCalcs;
 value4 = numFilters;
-value5 = NetworkMatrix;
+value5 = NetMatrix;
 value6 = outputSize;
 value7 = numLayers;
 value8 = inputSize;
 value9 = maxPool;
 
-inds = [];
-for jj=1:outputSize(1)*maxPool
-    for kk=1:outputSize(2)*maxPool
-        temp = zeros(inputSize);
-        temp(jj:jj+NetworkMatrix(2,1)-1,kk:kk+NetworkMatrix(2,2)-1) = 1;
-        inds = [inds;find(temp)];
-    end
-end
-value10 = inds;
-
-inds = repmat((1:numel(filter))',[length(inds)/numel(filter),1]);
-value11 = inds;
-
-inds = [];
-for jj=1:outputSize(1)*maxPool
-    for kk=1:outputSize(2)*maxPool
-        temp = zeros(outputSize*maxPool);temp(jj,kk) = 1;
-        inds = [inds;repmat(find(temp),[numel(filter),1])];
-    end
-end
-value12 = inds;
+% indices = cell(1,1);indices{1} = cell(numLayers,1);
+% indices2 = cell(1,1);indices2{1} = cell(numLayers,1);
+% for ii=1:numLayers
+%     inds = [];
+%     filter = NetMatrix{1}{2}(ii,1);
+%     for kk=1:outputSize{1}{ii}(1)*maxPool
+%         for jj=1:outputSize{1}{ii}(2)*maxPool
+%             temp = zeros(inputSize{1}{ii});
+%             temp(jj:jj+filter-1,kk:kk+filter-1) = 1;
+%             inds = [inds;find(temp)];
+%         end
+%     end
+%     indices{1}{ii} = inds;
+%     indices2{1}{ii} = repmat((1:filter*filter)',[length(inds)/(filter*filter),1]);
+% end
+% value10 = indices;
+% 
+% value11 = indices2;
+% 
+% indices = cell(1,1);indices{1} = cell(numLayers,1);
+% for ii=1:numLayers
+%     inds = [];
+%     filter = NetMatrix{1}{2}(ii,1);
+%     for kk=1:outputSize{1}{ii}(1)*maxPool
+%         for jj=1:outputSize{1}{ii}(2)*maxPool
+%             temp = zeros(outputSize{1}{ii}*maxPool);temp(jj,kk) = 1;
+%             inds = [inds;repmat(find(temp),[filter*filter,1])];
+%         end
+%     end
+%     indices{1}{ii} = inds;
+% end
+% value12 = indices;
         
-myNet = struct(field,value,field2,value2,field3,value3,field4,value4,...
-    field5,value5,field6,value6,field7,value7,field8,value8,field9,value9,...
-    field10,value10,field11,value11,field12,value12);
+myNet = struct(field1,value1,field2,value2,field3,value3,field4,value4,...
+    field5,value5,field6,value6,field7,value7,field8,value8,field9,value9);
 end
