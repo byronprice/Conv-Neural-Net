@@ -78,7 +78,8 @@ for jj=1:numLayers
   
     for ii=1:numFilters(jj)
         value1{1}{index} = normrnd(0,1/currentSize,[currentSize,currentSize]);
-        value2{1}{index} = normrnd(0,1/prod(outSize),outSize);
+%         value2{1}{index} = normrnd(0,1/prod(outSize),outSize);
+        value2{1}{index} = normrnd(0,1);
         index = index+1;
     end
 %     value1{1}{index} = normrnd(0,1/sqrt(currentSize),[currentSize,1]);
