@@ -47,29 +47,31 @@ fullSize = prod(Network.outputSize{end});
 
 neuronIndex = Network.numFilters(end)*(Network.numLayers-1)+1;
 for ii=1:Network.numFilters(end)
+    if Network.numLayers == 1
+        activationIndex = 1;
+        numIter = 1;
+    else
+%         activationIndex = Network.numFilters(end)*(Network.numLayers-2)+1+ii;
+        activationIndex = Network.numFilters(end)*(Network.numLayers-2)+1+1;
+        numIter = Network.numFilters(end-1);
+        activationIndex = activationIndex:activationIndex+numIter-1;
+    end
+    
     indices = 1+fullSize*(ii-1):fullSize*ii;
     tmp = W(indices,:)*origDeltaL;
     deltaL = kron(reshape(tmp,Network.outputSize{end}),ones(Network.maxPool)).*SwishPrime(Z{neuronIndex+ii-1});
-
-    if Network.numLayers == 1
-        activationIndex = 1;
-%         numIter = 1;
-    else
-        activationIndex = Network.numFilters(end)*(Network.numLayers-2)+1+ii;
-%         activationIndex = Network.numFilters(end)*(Network.numLayers-2)+1+1; %+jj
-%         numIter = Network.numFilters(end-1);
-%         activationIndex = activationIndex:activationIndex+numIter-1;
-    end
-    
-%     tmp = conv2(rot90(Activations{activationIndex(1)},2),deltaL,'valid');
-%     for kk=2:numIter
-%         tmp = tmp+conv2(rot90(Activations{activationIndex(kk)},2),deltaL,'valid');
-%     end
-%     dCostdWeight{neuronIndex+ii-1} = tmp;
-    
-    dCostdWeight{neuronIndex+ii-1} = conv2(rot90(Activations{activationIndex},2),deltaL,'valid');
-    dCostdBias{neuronIndex+ii-1} = sum(deltaL(:));
     deltaLSave{neuronIndex+ii-1} = deltaL;
+    
+    tmpWeights = zeros(size(Network.Weights{neuronIndex+ii-1}));
+    tmpWeights(:,:,1) = conv2(rot90(Activations{activationIndex(1)},2),deltaL,'valid');
+    for kk=2:numIter
+        tmpWeights(:,:,kk) = conv2(rot90(Activations{activationIndex(kk)},2),deltaL,'valid');
+    end
+    dCostdWeight{neuronIndex+ii-1} = tmpWeights;
+    
+%     dCostdWeight{neuronIndex+ii-1} = conv2(rot90(Activations{activationIndex},2),deltaL,'valid');
+    dCostdBias{neuronIndex+ii-1} = sum(deltaL(:));
+%     deltaLSave{neuronIndex+ii-1} = deltaL;
 end
 
 for ii=(Network.numLayers-1):-1:1
@@ -79,27 +81,38 @@ for ii=(Network.numLayers-1):-1:1
     for jj=1:Network.numFilters(ii)
         if ii==1
             activationIndex = 1;
-%             numIter = 1;
+            numIter = 1;
         else
-            activationIndex = Network.numFilters(ii)*(ii-2)+1+jj; %+jj
-%             activationIndex = Network.numFilters(ii)*(ii-2)+1+1; %+jj
-%             numIter = Network.numFilters(ii-1);
-%             activationIndex = activationIndex:activationIndex+numIter-1;
+%             activationIndex = Network.numFilters(ii)*(ii-2)+1+jj; %+jj
+            activationIndex = Network.numFilters(ii)*(ii-2)+1+1; %+jj
+            numIter = Network.numFilters(ii-1);
+            activationIndex = activationIndex:activationIndex+numIter-1;
         end
         
-        deltaL = deltaLSave{index+jj-1};
-        W = Network.Weights{index+jj-1};
+%         origDeltaL = deltaLSave{index+jj-1};
+%         W = Network.Weights{index+jj-1};
+%         deltaL = kron(conv2(rot90(W,2),deltaL,'full'),ones(Network.maxPool)).*SwishPrime(Z{neuronIndex+jj-1});
         
-        deltaL = kron(conv2(rot90(W,2),deltaL,'full'),ones(Network.maxPool)).*SwishPrime(Z{neuronIndex+jj-1});
+        newDeltaL = zeros(size(Z{neuronIndex+jj-1}));
+        for kk=1:Network.numFilters(ii+1)
+            origDeltaL = deltaLSave{index+kk-1};
+            W = squeeze(Network.Weights{index+kk-1}(:,:,jj));
+            deltaL = kron(conv2(rot90(W,2),origDeltaL,'full'),ones(Network.maxPool));%...
+%                 .*SwishPrime(Z{neuronIndex+jj-1});
+            newDeltaL = newDeltaL+deltaL;
+        end
+        newDeltaL = newDeltaL.*SwishPrime(Z{neuronIndex+jj-1});
+        deltaLSave{neuronIndex+jj-1} = newDeltaL;
         
-%         tmp = conv2(rot90(Activations{activationIndex(1)},2),deltaL,'valid');
-%         for kk=2:numIter
-%             tmp = tmp+conv2(rot90(Activations{activationIndex(kk)},2),deltaL,'valid');
-%         end
-%         dCostdWeight{neuronIndex+jj-1} = tmp;
-        dCostdWeight{neuronIndex+jj-1} = conv2(rot90(Activations{activationIndex},2),deltaL,'valid');
-        dCostdBias{neuronIndex+jj-1} = sum(deltaL(:));
-        deltaLSave{neuronIndex+jj-1} = deltaL;
+        tmpWeights = zeros(size(Network.Weights{neuronIndex+jj-1}));
+        tmpWeights(:,:,1) = conv2(rot90(Activations{activationIndex(1)},2),newDeltaL,'valid');
+        for kk=2:numIter
+            tmpWeights(:,:,kk) = conv2(rot90(Activations{activationIndex(kk)},2),newDeltaL,'valid');
+        end
+        dCostdWeight{neuronIndex+jj-1} = tmpWeights;
+        
+%         dCostdWeight{neuronIndex+jj-1} = conv2(rot90(Activations{activationIndex},2),deltaL,'valid');
+        dCostdBias{neuronIndex+jj-1} = sum(newDeltaL(:));
     end
 end
 

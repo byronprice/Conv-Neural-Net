@@ -31,9 +31,9 @@ numPixels = sqrt(size(Images,1));
 
 % CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
 numDigits = 10;
-filterSize = 3;
-numFilters = 20;
-numLayers = 3;
+filterSize = 5;
+numFilters = 10;
+numLayers = 2;
 NetMatrix = cell(1,1);NetMatrix{1} = {[numPixels,numPixels],repmat([filterSize,numFilters],[numLayers,1]),numDigits};
 myNet = ConvNetwork(NetMatrix); % from a function
 % in this directory, builds a convolutional neural net
@@ -53,7 +53,7 @@ end
 % STOCHASTIC GRADIENT DESCENT
 batchSize = 10; % make mini batches and run the algorithm
 % on those "runs" times
-runs = 5e3;
+runs = 1e4;
 eta = 0.01; % learning rate
 lambda = 10; % L2 regularization parameter
 

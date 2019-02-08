@@ -32,11 +32,11 @@ for jj=1:Network.numLayers
         if jj==1
             temp = conv2(X,Network.Weights{filterIndex},'valid');
         else
-%             temp = conv2(squeeze(X(:,:,1)),Network.Weights{filterIndex},'valid');
-%             for kk=2:Network.numFilters(jj-1)
-%                 temp = temp+conv2(squeeze(X(:,:,kk)),Network.Weights{filterIndex},'valid');
-%             end
-            temp = conv2(squeeze(X(:,:,ii)),Network.Weights{filterIndex},'valid');
+            temp = conv2(squeeze(X(:,:,1)),squeeze(Network.Weights{filterIndex}(:,:,1)),'valid');
+            for kk=2:Network.numFilters(jj-1)
+                temp = temp+conv2(squeeze(X(:,:,kk)),squeeze(Network.Weights{filterIndex}(:,:,kk)),'valid');
+            end
+%             temp = conv2(squeeze(X(:,:,ii)),Network.Weights{filterIndex},'valid');
         end
         Z{filterIndex} = temp+Network.Biases{filterIndex};
         temp = Swish(Z{filterIndex});

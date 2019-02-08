@@ -35,7 +35,7 @@ for ii=1:numLayers
     filter = zeros(filtLen,filtLen);
     inputSize{1}{ii} = size(input);
     check = size(conv2(input,filter,'valid'))./maxPool;
-    possLens = 2:10;
+    possLens = 2:12;
     [~,inds] = sort(abs(possLens-filtLen));
     possLens = possLens(inds);
     count = 1;
@@ -74,10 +74,14 @@ value2{1} = cell(1,numCalcs);
 index = 1;
 for jj=1:numLayers
     currentSize = filterSize{1}{jj};
-    outSize = outputSize{1}{jj}*maxPool;
+%     outSize = outputSize{1}{jj}*maxPool;
   
     for ii=1:numFilters(jj)
-        value1{1}{index} = normrnd(0,1/currentSize,[currentSize,currentSize]);
+        if jj>1
+            value1{1}{index} = normrnd(0,1/currentSize,[currentSize,currentSize,numFilters(jj-1)]);
+        else
+            value1{1}{index} = normrnd(0,1/currentSize,[currentSize,currentSize]);
+        end
 %         value2{1}{index} = normrnd(0,1/prod(outSize),outSize);
         value2{1}{index} = normrnd(0,1);
         index = index+1;
