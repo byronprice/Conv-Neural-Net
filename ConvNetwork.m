@@ -35,11 +35,11 @@ for ii=1:numLayers
     filter = zeros(filtLen,filtLen);
     inputSize{1}{ii} = size(input);
     check = size(conv2(input,filter,'valid'))./maxPool;
-    possLens = 2:12;
+    possLens = 2:13;
     [~,inds] = sort(abs(possLens-filtLen));
     possLens = possLens(inds);
     count = 1;
-    while mod(check(1),1)~=0 & check>1
+    while mod(check(1),1)~=0 && mod(check(2),1)~=0
        filtLen = possLens(count);
        filter = zeros(filtLen,filtLen);
        check = size(conv2(input,filter,'valid'))./maxPool;
