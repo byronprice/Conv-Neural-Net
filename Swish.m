@@ -4,5 +4,5 @@ function [y] = Swish(Z)
 %     Brain
 % Calculate the Swish function for an input
 %  fix the tunable parameter beta to be 1
-y = Z.*((1+exp(-Z)).^(-1)); % beta would be multiplied by Z in the sigmoid
+y = Z./(1+exp(-Z)); % beta would be multiplied by Z in the sigmoid
 end

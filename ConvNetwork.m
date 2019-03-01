@@ -21,7 +21,7 @@ function [myNet] = ConvNetwork(NetMatrix)
 
 input = zeros(NetMatrix{1}{1});
 numLayers = size(NetMatrix{1}{2},1);
-maxPool = 2;
+maxPool = 2.*ones(numLayers,1);maxPool(end) = 1;
 numFilters = zeros(numLayers,1);
 outNodes = NetMatrix{1}{3};
 
@@ -34,19 +34,23 @@ for ii=1:numLayers
     filtLen = NetMatrix{1}{2}(ii,1);
     filter = zeros(filtLen,filtLen);
     inputSize{1}{ii} = size(input);
-    check = size(conv2(input,filter,'valid'))./maxPool;
-    possLens = 2:13;
-    [~,inds] = sort(abs(possLens-filtLen));
-    possLens = possLens(inds);
+    
+    check = size(conv2(input,filter,'valid'))./maxPool(ii);
+    
+    origFilt = filtLen;
+    plusMinus = -1;step = 1;
     count = 1;
-    while mod(check(1),1)~=0 && mod(check(2),1)~=0
-       filtLen = possLens(count);
+    while filtLen>0 && ~(mod(check(1),1)==0 && mod(check(2),1)==0)
+       filtLen = origFilt+plusMinus*step;
        filter = zeros(filtLen,filtLen);
-       check = size(conv2(input,filter,'valid'))./maxPool;
+       check = size(conv2(input,filter,'valid'))./maxPool(ii);
+       
+       plusMinus = plusMinus*-1;
+       step = step+mod(count-1,2);
        count = count+1;
     end
     filter = zeros(filtLen,filtLen);
-    outputSize{1}{ii} = size(conv2(input,filter,'valid'))./maxPool;
+    outputSize{1}{ii} = size(conv2(input,filter,'valid'))./maxPool(ii);
     filterSize{1}{ii} = filtLen;
     input = zeros(outputSize{1}{ii});
     numFilters(ii) = NetMatrix{1}{2}(ii,2);
@@ -77,7 +81,7 @@ for jj=1:numLayers
 %     outSize = outputSize{1}{jj}*maxPool;
   
     for ii=1:numFilters(jj)
-        if jj>1
+        if jj<0 % >1
             value1{1}{index} = normrnd(0,1/currentSize,[currentSize,currentSize,numFilters(jj-1)]);
         else
             value1{1}{index} = normrnd(0,1/currentSize,[currentSize,currentSize]);

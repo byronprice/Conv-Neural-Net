@@ -26,15 +26,15 @@ Z = cell(1,Network.numCalcs);
 X = Input;
 for jj=1:Network.numLayers
     filterIndex = Network.numFilters(jj)*(jj-1)+1;
-    idx = kron(reshape(1:(Network.outputSize{jj}(1)*Network.outputSize{jj}(2)),Network.outputSize{jj}),ones(Network.maxPool));
+    idx = kron(reshape(1:(Network.outputSize{jj}(1)*Network.outputSize{jj}(2)),Network.outputSize{jj}),ones(Network.maxPool(jj)));
     OutputMatrix = zeros([Network.outputSize{jj},Network.numFilters(jj)]);
     for ii=1:Network.numFilters(jj)
         if jj==1
             temp = conv2(X,Network.Weights{filterIndex},'valid');
         else
-            temp = conv2(squeeze(X(:,:,1)),squeeze(Network.Weights{filterIndex}(:,:,1)),'valid');
+            temp = conv2(squeeze(X(:,:,1)),Network.Weights{filterIndex},'valid');
             for kk=2:Network.numFilters(jj-1)
-                temp = temp+conv2(squeeze(X(:,:,kk)),squeeze(Network.Weights{filterIndex}(:,:,kk)),'valid');
+                temp = temp+conv2(squeeze(X(:,:,kk)),Network.Weights{filterIndex},'valid');
             end
 %             temp = conv2(squeeze(X(:,:,ii)),Network.Weights{filterIndex},'valid');
         end
