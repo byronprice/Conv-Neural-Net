@@ -36,6 +36,20 @@ deltaL = (Output{end}-DesireOutput); % cross-entropy cost with sigmoid/swish out
                                 % you want the output neuron to be linear
 % activationIndex = Network.numFilters(end)*(Network.numLayers-1)+1;
 index = Network.numCalcs;
+dCostdWeight{index} = Activations{index}*deltaL';
+dCostdBias{index} = deltaL;
+
+index = index-1;
+for ii=1:Network.numFC-2
+    deltaL = (Network.Weights{index+1}*deltaL).*SwishPrime(Z{index});
+    
+    dCostdWeight{index} = Activations{index}*deltaL';
+    dCostdBias{index} = deltaL;
+    deltaLSave{index} = deltaL;
+    index = index-1;
+end
+
+deltaL = (Network.Weights{index+1}*deltaL).*SwishPrime(Z{index});
 temp = cat(3,Activations{index+1-Network.numFilters(end):index});
 dCostdWeight{index} = temp(:)*deltaL';
 dCostdBias{index} = deltaL;

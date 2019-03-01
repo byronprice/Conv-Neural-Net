@@ -21,9 +21,9 @@ function [myNet] = ConvNetwork(NetMatrix)
 
 input = zeros(NetMatrix{1}{1});
 numLayers = size(NetMatrix{1}{2},1);
-maxPool = 2.*ones(numLayers,1);maxPool(end) = 1;
+maxPool = 2.*ones(numLayers,1);%maxPool(end) = 1;
 numFilters = zeros(numLayers,1);
-outNodes = NetMatrix{1}{3};
+numFC = length(NetMatrix{1}{3});
 
 outputSize = cell(1,1);outputSize{1} = cell(numLayers,1);
 inputSize = cell(1,1);inputSize{1} = cell(numLayers,1);
@@ -56,7 +56,7 @@ for ii=1:numLayers
     numFilters(ii) = NetMatrix{1}{2}(ii,2);
     numCalcs = numCalcs+numFilters(ii);
 end
-
+numCalcs = numCalcs+numFC-1;
 
 field1 = 'Weights';
 field2 = 'Biases';
@@ -67,6 +67,7 @@ field6 = 'outputSize';
 field7 = 'numLayers';
 field8 = 'inputSize';
 field9 = 'maxPool';
+field10 = 'numFC';
 
 
 value1 = cell(1,1);
@@ -95,8 +96,15 @@ for jj=1:numLayers
 %     index = index+1;
 end
 fullSize = numFilters(end)*prod(outputSize{1}{end});
-value1{1}{index} = normrnd(0,1/sqrt(fullSize),[fullSize,outNodes]);
-value2{1}{index} = normrnd(0,1,[outNodes,1]);
+value1{1}{index} = normrnd(0,1/sqrt(fullSize),[fullSize,NetMatrix{1}{3}(1)]);
+value2{1}{index} = normrnd(0,1,[NetMatrix{1}{3}(1),1]);
+index = index+1;
+
+for ii=2:numFC
+    value1{1}{index} = normrnd(0,1/sqrt(fullSize),[NetMatrix{1}{3}(ii-1),NetMatrix{1}{3}(ii)]);
+    value2{1}{index} = normrnd(0,1,[NetMatrix{1}{3}(ii),1]);
+    index = index+1;
+end
 
 value3 = numCalcs;
 value4 = numFilters;
@@ -105,6 +113,7 @@ value6 = outputSize;
 value7 = numLayers;
 value8 = inputSize;
 value9 = maxPool;
+value10 = numFC;
 
 % indices = cell(1,1);indices{1} = cell(numLayers,1);
 % indices2 = cell(1,1);indices2{1} = cell(numLayers,1);
@@ -140,5 +149,6 @@ value9 = maxPool;
 % value12 = indices;
         
 myNet = struct(field1,value1,field2,value2,field3,value3,field4,value4,...
-    field5,value5,field6,value6,field7,value7,field8,value8,field9,value9);
+    field5,value5,field6,value6,field7,value7,field8,value8,field9,value9,...
+    field10,value10);
 end

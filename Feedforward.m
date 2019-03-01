@@ -46,12 +46,13 @@ for jj=1:Network.numLayers
         filterIndex = filterIndex+1;
     end
     X = OutputMatrix;
-%     Z{index} = sum(OutputMatrix,3)+Network.Biases{index};
-%     Output{index} = Swish(Z{index});
-%     X = Output{index};
 end
 
-Z{filterIndex} = Network.Weights{filterIndex}'*X(:)+Network.Biases{filterIndex};
-Output{filterIndex} = Swish(Z{filterIndex});
+for jj=1:Network.numFC
+    Z{filterIndex} = Network.Weights{filterIndex}'*X(:)+Network.Biases{filterIndex};
+    Output{filterIndex} = Swish(Z{filterIndex});
+    X = Output{filterIndex};
+    filterIndex = filterIndex+1;
+end
 
 end
