@@ -59,14 +59,14 @@ origDeltaL = deltaL;
 W = Network.Weights{index};
 fullSize = prod(Network.outputSize{end});
 
-neuronIndex = Network.numFilters(end)*(Network.numLayers-1)+1;
+neuronIndex = sum(Network.numFilters(1:end-1))+1;
 for ii=1:Network.numFilters(end)
     if Network.numLayers == 1
         activationIndex = 1;
         numIter = 1;
     else
 %         activationIndex = Network.numFilters(end)*(Network.numLayers-2)+1+ii;
-        activationIndex = Network.numFilters(end)*(Network.numLayers-2)+1+1;
+        activationIndex = sum(Network.numFilters(1:end-2))+1+1;
         numIter = Network.numFilters(end-1);
         activationIndex = activationIndex:activationIndex+numIter-1;
     end
@@ -89,8 +89,8 @@ for ii=1:Network.numFilters(end)
 end
 
 for ii=(Network.numLayers-1):-1:1
-    index = Network.numFilters(ii+1)*ii+1;
-    neuronIndex = Network.numFilters(ii)*(ii-1)+1;
+    index = sum(Network.numFilters(1:ii))+1;
+    neuronIndex = sum(Network.numFilters(1:ii-1))+1;
     
     for jj=1:Network.numFilters(ii)
         if ii==1
@@ -98,7 +98,7 @@ for ii=(Network.numLayers-1):-1:1
             numIter = 1;
         else
 %             activationIndex = Network.numFilters(ii)*(ii-2)+1+jj; %+jj
-            activationIndex = Network.numFilters(ii)*(ii-2)+1+1; %+jj
+            activationIndex = sum(Network.numFilters(1:ii-2))+1+1; %+jj
             numIter = Network.numFilters(ii-1);
             activationIndex = activationIndex:activationIndex+numIter-1;
         end

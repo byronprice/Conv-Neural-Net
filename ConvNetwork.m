@@ -21,7 +21,7 @@ function [myNet] = ConvNetwork(NetMatrix)
 
 input = zeros(NetMatrix{1}{1});
 numLayers = size(NetMatrix{1}{2},1);
-maxPool = 2.*ones(numLayers,1);%maxPool(end) = 1;
+maxPool = ones(numLayers,1);%maxPool(end) = 1;
 numFilters = zeros(numLayers,1);
 numFC = length(NetMatrix{1}{3});
 

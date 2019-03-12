@@ -7,13 +7,21 @@ maxLuminance = 255;
 imSize = [61,81];
 outSize = 4;
 filterSize = 5;
-numFilters = 5;
-numLayers = 1;
+numFilters = 15;
+numLayers = 3;
 
-fprintf('Layers: %d  Filter Number: %d\n',numLayers,numFilters);
-NetMatrix = cell(1,1);NetMatrix{1} = {imSize,repmat([filterSize,numFilters],[numLayers,1]),[500,50,outSize]};
+% fcNet = [500,100,25,outSize];
+fcNet = [500,50,outSize];
+
+fprintf('\nLayers: %d  Filters: %d\n',numLayers,numFilters);
+tmp = repmat([filterSize,numFilters],[numLayers,1]);
+tmp(end,2) = 1;
+NetMatrix = cell(1,1);NetMatrix{1} = {imSize,tmp,fcNet};
 myNet = ConvNetwork(NetMatrix); % from a function
 % in this directory, builds a convolutional neural net
+
+% load('EyeTrackerConvNet.mat','Network');
+% myNet = Network;clear Network;
 
 load('ImageNetData.mat','images','boxes');
 numImages = length(images);
@@ -27,14 +35,15 @@ numTesting = length(testingInds);
 % STOCHASTIC GRADIENT DESCENT
 batchSize = 10; % make mini batches and run the algorithm
 % on those "runs" times
-runs = 5e4;
-eta = 0.5e-4; % learning rate
+runs = 1e5;
+eta = 1e-5; % learning rate
 lambda = 10; % L2 regularization parameter
 
 numCalcs = myNet.numCalcs;
 dCostdWeight = cell(1,numCalcs);
 dCostdBias = cell(1,numCalcs);
 
+allTestCosts = zeros(runs/1e2,1);
 for ii=1:runs
     indices = ceil(rand([batchSize,1]).*(numTraining-1));
     for jj=1:numCalcs
@@ -45,10 +54,15 @@ for ii=1:runs
         index = indices(jj);
         currentIm = images{trainingInds(index)};
         currentMean = mean(currentIm(:));
-        if ii<numTraining
+        if ii<2*numTraining
             newContrast = 1;
         else
-            newContrast = rand*0.5+0.5;
+            newContrast = min(rand*0.7+0.4,1);
+            
+            if binornd(1,0.25)
+               currentIm = maxLuminance-currentIm; 
+               currentMean = mean(currentIm(:));
+            end
         end
         currentIm = (currentIm-currentMean)*newContrast+currentMean;
         desireOut = boxes{trainingInds(index),4}';
@@ -63,12 +77,12 @@ for ii=1:runs
         end
     end
     [myNet] = GradientDescent(myNet,dCostdWeight,dCostdBias,batchSize,eta,numTraining,lambda);
-   if mod(ii,5e2)==0
+   if mod(ii,1e2)==0
         [meanIOU] = CheckTestData(images,boxes,testingInds,maxLuminance,myNet,numTesting,imSize);
-        plot(ii/5e2,meanIOU,'.');hold on;pause(0.01);
+        allTestCosts(ii/1e2) = meanIOU;
+        plot(ii/5e2,meanIOU,'.');hold on;pause(1/100);
     end
 end
-
 % COMPARE ON TEST DATA
 end
 
@@ -100,7 +114,7 @@ end
 
 quants = quantile(IOU,[0.05/2,1-0.05/2]);
 meanIOU = mean(IOU);
-fprintf('Mean IOU: %3.3f\n',meanIOU);
-fprintf('IOU Quantiles: [%3.3f,%3.3f]\n\n',quants(1),quants(2));
+% fprintf('Mean IOU: %3.3f\n',meanIOU);
+% fprintf('IOU Quantiles: [%3.3f,%3.3f]\n\n',quants(1),quants(2));
 
 end

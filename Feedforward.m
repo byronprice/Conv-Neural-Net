@@ -24,8 +24,8 @@ Output = cell(1,Network.numCalcs);
 Z = cell(1,Network.numCalcs);
 
 X = Input;
+filterIndex = 1;
 for jj=1:Network.numLayers
-    filterIndex = Network.numFilters(jj)*(jj-1)+1;
     idx = kron(reshape(1:(Network.outputSize{jj}(1)*Network.outputSize{jj}(2)),Network.outputSize{jj}),ones(Network.maxPool(jj)));
     OutputMatrix = zeros([Network.outputSize{jj},Network.numFilters(jj)]);
     for ii=1:Network.numFilters(jj)
