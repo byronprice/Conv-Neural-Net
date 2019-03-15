@@ -7,11 +7,11 @@ maxLuminance = 255;
 imSize = [61,81];
 outSize = 4;
 filterSize = 5;
-numFilters = 15;
-numLayers = 3;
+numFilters = 10;
+numLayers = 2;
 
 % fcNet = [500,100,25,outSize];
-fcNet = [500,50,outSize];
+fcNet = [100,100,100,25,outSize];
 
 fprintf('\nLayers: %d  Filters: %d\n',numLayers,numFilters);
 tmp = repmat([filterSize,numFilters],[numLayers,1]);
@@ -80,7 +80,7 @@ for ii=1:runs
    if mod(ii,1e2)==0
         [meanIOU] = CheckTestData(images,boxes,testingInds,maxLuminance,myNet,numTesting,imSize);
         allTestCosts(ii/1e2) = meanIOU;
-        plot(ii/5e2,meanIOU,'.');hold on;pause(1/100);
+        plot(ii/1e2,meanIOU,'.');hold on;pause(1/100);
     end
 end
 % COMPARE ON TEST DATA
