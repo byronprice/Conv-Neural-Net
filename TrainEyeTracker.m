@@ -97,6 +97,7 @@ for ii=1:runs
         [IOU] = CheckTestData(images,boxes,validationInds,maxLuminance,myNet,numValidation,imSize);
         meanIOU = mean(IOU);
         allValidationCosts(ii/10) = meanIOU;
+
 %         plot(ii/10,meanIOU,'.');hold on;pause(1/100);
         
         if ii/10>2

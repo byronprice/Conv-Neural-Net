@@ -161,7 +161,7 @@ trainingIdx = randperm(iterCount,round(iterCount*0.8));
 testIdx = 1:iterCount;
 testIdx = find(~ismember(testIdx,trainingIdx));
     
-for epochs = 1:10
+for epochs = [10,15,20]
     checkpointLocation = '/home/byron/Documents/Current-Projects/Conv-Neural-Net/CheckPointNets';
     options = trainingOptions('sgdm', ...
         'MiniBatchSize',25, ...
@@ -188,7 +188,7 @@ for epochs = 1:10
         image = imread(eyeTrackTable.imageFilename{testIdx(ii)});
         bbox = eyeTrackTable.ROI{testIdx(ii)};
         
-        [outbox,score,~] = detect(rcnn,image,'MiniBatchSize',25);
+        [outbox,score,~] = detect(rcnn,image,'NumStrongestRegions',1000);
         if isempty(score)
             IOU(ii,1) = 0;IOU(ii,2) = 0;
         else
