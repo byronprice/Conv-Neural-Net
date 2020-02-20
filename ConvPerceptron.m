@@ -29,6 +29,19 @@ load('TrainingData.mat')
 numImages = size(Images,2);
 numPixels = sqrt(size(Images,1));
 
+% expand training data with relatively small rotations of the original
+%  images
+for ii=1:20000
+    index = randperm(numImages,1);
+    tmp = reshape(Images(:,index),[numPixels,numPixels]);
+    rotVal = (5+rand*15)*(binornd(1,0.5)*2-1);
+    new = imrotate(tmp,rotVal,'bilinear','crop');
+    Images = [Images,new(:)];
+    Labels = [Labels;Labels(index)];
+end
+
+numImages = length(Labels);
+
 % CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
 numDigits = 10;
 filterSize = 5;
@@ -59,7 +72,7 @@ end
 % STOCHASTIC GRADIENT DESCENT
 batchSize = 10; % make mini batches and run the algorithm
 % on those "runs" times
-runs = 5e4;
+runs = 1e5;
 eta = 0.001; % learning rate
 lambda = 1; % L2 regularization parameter
 
@@ -75,8 +88,13 @@ for ii=1:runs
     end
     for jj=1:batchSize
         index = indices(jj);
-        [costweight,costbias] = BackProp(reshape(Images(:,index),[numPixels,numPixels]),myNet,...
-            DesireOutput(:,index));
+        if binornd(1,1e-3)
+            [costweight,costbias] = BackProp(0.5.*ones([numPixels,numPixels]),myNet,...
+                zeros(numDigits,1));
+        else
+            [costweight,costbias] = BackProp(reshape(Images(:,index),[numPixels,numPixels]),myNet,...
+                DesireOutput(:,index));
+        end
         for kk=1:numCalcs
             dCostdWeight{kk} = dCostdWeight{kk}+costweight{kk};
             dCostdBias{kk} = dCostdBias{kk}+costbias{kk};
