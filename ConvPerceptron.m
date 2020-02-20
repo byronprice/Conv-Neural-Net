@@ -32,10 +32,16 @@ numPixels = sqrt(size(Images,1));
 % CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
 numDigits = 10;
 filterSize = 4;
-numFilters = 6;
-numLayers = 3;
-% NetMatrix = cell(1,1);NetMatrix{1} = {[numPixels,numPixels],repmat([filterSize,numFilters],[numLayers,1]),numDigits};
-% myNet = ConvNetwork(NetMatrix); % from a function
+numFilters = 10;
+numLayers = 2;
+
+imSize = [numPixels,numPixels];
+tmp = repmat([filterSize,numFilters],[numLayers,1]);
+% tmp(end,2) = 1;
+fcNet = numDigits;
+
+NetMatrix = cell(1,1);NetMatrix{1} = {imSize,tmp,fcNet};
+myNet = ConvNetwork(NetMatrix); % from a function
 % in this directory, builds a convolutional neural net
 
 DesireOutput = zeros(numDigits,numImages);
@@ -53,9 +59,9 @@ end
 % STOCHASTIC GRADIENT DESCENT
 batchSize = 10; % make mini batches and run the algorithm
 % on those "runs" times
-runs = 5e3;
-eta = 0.005; % learning rate
-lambda = 10; % L2 regularization parameter
+runs = 1e4;
+eta = 0.001; % learning rate
+lambda = 1; % L2 regularization parameter
 
 numCalcs = myNet.numCalcs;
 dCostdWeight = cell(1,numCalcs);
@@ -113,7 +119,6 @@ end
 Accuracy = count/numImages;
 
 fprintf('Accuracy: %3.3f\n\n',Accuracy);
-
 
 % for ii=1:5
 %     index = ceil(rand*(numImages-1));
