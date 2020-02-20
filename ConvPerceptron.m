@@ -29,18 +29,34 @@ load('TrainingData.mat')
 numImages = size(Images,2);
 numPixels = sqrt(size(Images,1));
 
+expandSet = numImages+20000;
+newIms = zeros(size(Images,1),expandSet);
+newIms(:,1:numImages) = Images;
+
+newLabels = zeros(expandSet,1);
+newLabels(1:numImages) = Labels;
+
 % expand training data with relatively small rotations of the original
-%  images
+%  images (5 to 20 degrees in either direction)
 for ii=1:20000
     index = randperm(numImages,1);
     tmp = reshape(Images(:,index),[numPixels,numPixels]);
     rotVal = (5+rand*15)*(binornd(1,0.5)*2-1);
     new = imrotate(tmp,rotVal,'bilinear','crop');
-    Images = [Images,new(:)];
-    Labels = [Labels;Labels(index)];
+    newIms(:,numImages+ii) = new(:);
+    newLabels(numImages+ii) = Labels(index);
 end
+Images = newIms;
+Labels = newLabels;
 
 numImages = length(Labels);
+
+% add a bit of noise to some of the images
+for ii=1:8000
+    index = randperm(numImages,1);
+    Images(:,index) = Images(:,index)+(rand([numPixels*numPixels,1])*0.2-0.1);
+    Images(:,index) = min(max(Images(:,index),0),1);
+end
 
 % CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
 numDigits = 10;
