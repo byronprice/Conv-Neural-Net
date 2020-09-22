@@ -65,7 +65,7 @@ numFilters = 5;
 numLayers = 2;
 
 imSize = [numPixels,numPixels];
-tmp = [5,5;5,2];
+tmp = [5,10;5,2];
 fcNet = numDigits;
 
 NetMatrix = cell(1,1);NetMatrix{1} = {imSize,tmp,fcNet};
@@ -88,7 +88,7 @@ end
 batchSize = 10; % make mini batches and run the algorithm
 % on those "runs" times
 runs = 1e5;
-eta = 0.001; % learning rate
+eta = 5e-4; % learning rate
 lambda = 1; % L2 regularization parameter
 
 numCalcs = myNet.numCalcs;
@@ -117,6 +117,7 @@ for ii=1:runs
     end
     [myNet] = GradientDescent(myNet,dCostdWeight,dCostdBias,batchSize,eta,numImages,lambda);
     %     clear indeces;% dCostdWeight dCostdBias;
+    
 end
 
 % COMPARE ON TEST DATA
