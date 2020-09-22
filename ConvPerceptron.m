@@ -37,11 +37,11 @@ newLabels = zeros(expandSet,1);
 newLabels(1:numImages) = Labels;
 
 % expand training data with relatively small rotations of the original
-%  images (5 to 20 degrees in either direction)
+%  images (1 to 10 degrees in either direction)
 for ii=1:20000
     index = randperm(numImages,1);
     tmp = reshape(Images(:,index),[numPixels,numPixels]);
-    rotVal = (5+rand*15)*(binornd(1,0.5)*2-1);
+    rotVal = (1+rand*9)*(binornd(1,0.5)*2-1);
     new = imrotate(tmp,rotVal,'bilinear','crop');
     newIms(:,numImages+ii) = new(:);
     newLabels(numImages+ii) = Labels(index);
@@ -52,7 +52,7 @@ Labels = newLabels;
 numImages = length(Labels);
 
 % add a bit of noise to some of the images
-for ii=1:8000
+for ii=1:10000
     index = randperm(numImages,1);
     Images(:,index) = Images(:,index)+(rand([numPixels*numPixels,1])*0.2-0.1);
     Images(:,index) = min(max(Images(:,index),0),1);
@@ -61,12 +61,11 @@ end
 % CREATE THE NETWORK WITH RANDOMIZED WEIGHTS AND BIASES
 numDigits = 10;
 filterSize = 5;
-numFilters = 10;
+numFilters = 5;
 numLayers = 2;
 
 imSize = [numPixels,numPixels];
-tmp = repmat([filterSize,numFilters],[numLayers,1]);
-tmp(end,2) = 5;
+tmp = [5,5;5,2];
 fcNet = numDigits;
 
 NetMatrix = cell(1,1);NetMatrix{1} = {imSize,tmp,fcNet};
